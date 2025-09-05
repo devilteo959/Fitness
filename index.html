@@ -34,9 +34,10 @@
     .chip{display:inline-flex;align-items:center;gap:.5rem;border-radius:999px;padding:.25rem .75rem;background:#f1f5f9}
     .volbox{text-align:right}
     .vol{font-weight:800}
-    nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border)}
-    .navgrid{max-width:780px;margin:0 auto;padding:.6rem;display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
     .sep{height:1px;background:var(--border);margin:.5rem 0}
+    .tab-nav{display:flex;border-bottom:1px solid var(--border);padding:0 1rem;gap:1rem;margin-top:.5rem}
+    .tab-btn{border:none;background:transparent;padding:.75rem 0;font-size:1rem;color:var(--muted);border-bottom:2px solid transparent}
+    .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
   </style>
 </head>
 <body>
@@ -45,13 +46,17 @@
       <h1>Workout Superserie</h1>
       <div class="row" style="gap:.5rem">
         <select id="weekSelect"></select>
-        <button id="managePlanBtn" class="btn ghost">⚙️ Gestisci</button>
       </div>
+    </div>
+    <div class="tab-nav">
+        <button id="tabAllenamento" class="tab-btn active">Allenamento</button>
+        <button id="tabGrafico" class="tab-btn">Riepilogo Grafico</button>
+        <button id="tabModifica" class="tab-btn">Modifica Scheda</button>
     </div>
   </header>
 
   <main>
-    <div id="workoutView">
+    <div id="allenamentoView">
       <section class="card">
         <div class="row">
           <div>
@@ -59,7 +64,6 @@
             <p id="weekNote" class="muted"></p>
           </div>
           <div class="row" style="gap:.5rem">
-            <button id="exportCsv" class="btn ghost">⬇️ CSV</button>
             <button id="resetWeek" class="btn ghost">♻️ Reset</button>
             <button id="saveNow" class="btn primary">💾 Salva</button>
           </div>
@@ -80,27 +84,27 @@
       <section id="workouts" class="grid"></section>
     </div>
 
-    <section id="managementView" style="display:none;">
+    <div id="graficoView" style="display:none;">
+      <section class="card">
+        <h2 class="title">Riepilogo Grafico</h2>
+        <p class="muted">Visualizzazione dei progressi settimanali per ogni esercizio.</p>
+        <div id="chartContainer" class="grid"></div>
+      </section>
+    </div>
+
+    <div id="modificaView" style="display:none;">
       <div class="card">
         <div class="row">
           <h2 class="title">Gestione Piano Allenamento</h2>
         <div class="row" style="gap:.5rem">
-          <button id="closeManagementBtn" class="btn ghost">Annulla</button>
           <button id="savePlanBtn" class="btn primary">💾 Salva</button>
         </div>
         </div>
         <p class="muted" style="margin-top:.5rem;">Qui potrai modificare i tuoi giorni di allenamento, le superserie e gli esercizi.</p>
         <div id="planEditor" style="margin-top:1rem;"></div>
       </div>
-    </section>
-  </main>
-
-  <nav>
-    <div class="navgrid">
-      <button class="btn ghost" id="resetWeek2">♻️ Reset</button>
-      <button class="btn primary" id="exportCsv2">⬇️ CSV</button>
     </div>
-  </nav>
+  </main>
 
 <script>
 /* ---------- Piano allenamento ---------- */
@@ -157,8 +161,11 @@ function setVal(k,f,v){ ensureWeek(); if(!state.data[state.week][state.day][k]) 
 const weekSelect = document.getElementById('weekSelect');
 const weekNote = document.getElementById('weekNote');
 const workouts = document.getElementById('workouts');
-const workoutView = document.getElementById('workoutView');
-const managementView = document.getElementById('managementView');
+
+const allenamentoView = document.getElementById('allenamentoView');
+const graficoView = document.getElementById('graficoView');
+const modificaView = document.getElementById('modificaView');
+
 
 function renderWeekSelect(){
   weekSelect.innerHTML = "";
@@ -268,8 +275,10 @@ function savePlanFromEditor() {
   plan = newPlan;
   localStorage.setItem('ws_plan', JSON.stringify(plan));
 
-  managementView.style.display = 'none';
-  workoutView.style.display = 'block';
+  modificaView.style.display = 'none';
+  allenamentoView.style.display = 'block';
+  document.getElementById('tabModifica').classList.remove('active');
+  document.getElementById('tabAllenamento').classList.add('active');
 
   if (!plan[state.day]) {
     const firstDay = Object.keys(plan)[0] || null;
@@ -395,55 +404,148 @@ function renderDay(){
   computeVolumes();
 }
 
-/* ---------- CSV & reset ---------- */
-function exportCSV(){
-  ensureWeek();
-  const rows = [["Settimana","Giorno","Superserie","Esercizio A","Esercizio B","Serie/Reps",
-                 "Peso A (kg)","Reps A","Volume A","Peso B (kg)","Reps B","Volume B","Volume Totale","Note"]];
-  const day = plan[state.day];
-  day.coppie.forEach(([A,B,SR],i)=>{
-    const k = keyAB(A,B);
-    const v = state.data[state.week][state.day][k] || {};
-    const m = SR.match(/(\d+)x/); const n = m?parseInt(m[1]):1;
-    const repsA = parseInt(v.repsA||0)||0, repsB = parseInt(v.repsB||0)||0;
-    const pesoA = parseFloat(v.pesoA||0)||0, pesoB = parseFloat(v.pesoB||0)||0;
-    const volA = Math.round(pesoA*repsA*n)||"";
-    const volB = Math.round(pesoB*repsB*n)||"";
-    const volT = (parseInt(volA)||0)+(parseInt(volB)||0) || "";
-    rows.push([state.week, day.titolo, i+1, A, B, SR,
-               v.pesoA||"", v.repsA||"", volA, v.pesoB||"", v.repsB||"", volB, volT, v.note||""]);
-  });
-  const csv = rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=`workout_settimana_${state.week}_${state.day}.csv`; document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
+/* ---------- App Logic ---------- */
+function renderCharts() {
+    const container = document.getElementById('chartContainer');
+    container.innerHTML = '<p class="muted">Caricamento grafici...</p>';
+
+    const allData = JSON.parse(localStorage.getItem('ws_data') || '{}');
+    const currentPlan = JSON.parse(localStorage.getItem('ws_plan') || '{}');
+    const exerciseData = {};
+
+    // 1. Estrarre tutti i dati di volume per ogni esercizio
+    for (const week in allData) {
+        for (const dayKey in allData[week]) {
+            const dayPlan = currentPlan[dayKey];
+            if (!dayPlan) continue;
+
+            const dayData = allData[week][dayKey];
+            for (const exKey in dayData) {
+                const couple = dayPlan.coppie.find(c => keyAB(c[0], c[1]) === exKey);
+                if (!couple) continue;
+
+                const [exA, exB, sr] = couple;
+                const m = sr.match(/(\d+)x/);
+                const sets = m ? parseInt(m[1]) : 1;
+                const entry = dayData[exKey];
+
+                if (exA && exA !== "-") {
+                    if (!exerciseData[exA]) exerciseData[exA] = {};
+                    const peso = parseFloat(entry.pesoA) || 0;
+                    const reps = parseInt(entry.repsA) || 0;
+                    exerciseData[exA][week] = Math.round(peso * reps * sets);
+                }
+                if (exB && exB !== "-") {
+                    if (!exerciseData[exB]) exerciseData[exB] = {};
+                    const peso = parseFloat(entry.pesoB) || 0;
+                    const reps = parseInt(entry.repsB) || 0;
+                    exerciseData[exB][week] = Math.round(peso * reps * sets);
+                }
+            }
+        }
+    }
+
+    container.innerHTML = ''; // Pulisci
+    const exercisesToShow = Object.keys(exerciseData).filter(ex => {
+        // Mostra solo grafici con dati per più di una settimana
+        return Object.values(exerciseData[ex]).filter(v => v > 0).length > 1;
+    });
+
+    if (exercisesToShow.length === 0) {
+        container.innerHTML = '<p class="muted">Non ci sono ancora abbastanza dati per generare i grafici. Completa almeno due settimane di allenamento per un esercizio.</p>';
+        return;
+    }
+
+    exercisesToShow.sort().forEach(exName => {
+        const weeklyVolumes = [];
+        for (let i = 1; i <= 6; i++) {
+            weeklyVolumes.push(exerciseData[exName][i] || 0);
+        }
+        const chartElement = createChart(exName, weeklyVolumes);
+        container.appendChild(chartElement);
+    });
 }
+
+function createChart(title, data) {
+    const container = document.createElement('div');
+    container.className = 'chart-wrapper';
+    container.innerHTML = `<h3 class="subtitle" style="margin-bottom:.5rem;">${title}</h3>`;
+
+    const maxVal = Math.max(...data, 1); // Evita divisione per zero
+    const svgHeight = 150;
+    const barWidth = 35;
+    const barMargin = 10;
+    const svgWidth = (barWidth + barMargin) * data.length;
+
+    let svg = `<svg width="100%" height="${svgHeight}" style="border-left:1px solid var(--border); border-bottom:1px solid var(--border);" viewBox="0 0 ${svgWidth} ${svgHeight}">`;
+
+    data.forEach((value, i) => {
+        const barHeight = Math.round((value / maxVal) * (svgHeight - 20)); // -20 per padding
+        const x = i * (barWidth + barMargin);
+        const y = svgHeight - barHeight;
+
+        svg += `
+            <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" fill="var(--primary)" rx="4"></rect>
+            <text x="${x + barWidth / 2}" y="${y - 5}" text-anchor="middle" font-size="12" fill="var(--text)">${value}</text>
+        `;
+    });
+
+    svg += '</svg>';
+
+    const labels = document.createElement('div');
+    labels.style.display = 'flex';
+    labels.style.justifyContent = 'space-around';
+    labels.style.fontSize = '.8rem';
+    labels.style.color = 'var(--muted)';
+    labels.style.padding = '0 1rem';
+
+    for(let i=1; i<= data.length; i++) {
+        const label = document.createElement('span');
+        label.textContent = `S${i}`;
+        labels.appendChild(label)
+    }
+
+    container.innerHTML += svg;
+    container.appendChild(labels);
+    return container;
+}
+
 
 function resetWeek(){
   if(!confirm('Azzerare i dati di questa settimana?')) return;
   ensureWeek(); state.data[state.week] = { G1:{}, G2:{}, G3:{} }; save(); renderDay();
 }
 
+function switchTab(activeTab) {
+    allenamentoView.style.display = 'none';
+    graficoView.style.display = 'none';
+    modificaView.style.display = 'none';
+    document.getElementById('tabAllenamento').classList.remove('active');
+    document.getElementById('tabGrafico').classList.remove('active');
+    document.getElementById('tabModifica').classList.remove('active');
+
+    if (activeTab === 'allenamento') {
+        allenamentoView.style.display = 'block';
+        document.getElementById('tabAllenamento').classList.add('active');
+    } else if (activeTab === 'grafico') {
+        graficoView.style.display = 'block';
+        document.getElementById('tabGrafico').classList.add('active');
+        renderCharts();
+    } else if (activeTab === 'modifica') {
+        modificaView.style.display = 'block';
+        document.getElementById('tabModifica').classList.add('active');
+        renderPlanEditor();
+    }
+}
+
 /* ---------- Bindings ---------- */
-document.getElementById('exportCsv').addEventListener('click', exportCSV);
-document.getElementById('exportCsv2').addEventListener('click', exportCSV);
 document.getElementById('resetWeek').addEventListener('click', resetWeek);
-document.getElementById('resetWeek2').addEventListener('click', resetWeek);
 document.getElementById('saveNow').addEventListener('click', ()=>{ save(); alert('Dati salvati.'); });
 document.getElementById('weekSelect').addEventListener('change', e=>{ state.week=+e.target.value; save(); renderWeekSelect(); renderDay(); });
 
-document.getElementById('managePlanBtn').addEventListener('click', () => {
-  workoutView.style.display = 'none';
-  managementView.style.display = 'block';
-  renderPlanEditor();
-});
-
-document.getElementById('closeManagementBtn').addEventListener('click', () => {
-  managementView.style.display = 'none';
-  workoutView.style.display = 'block';
-  // Nessun re-render al "chiudi", solo al "salva".
-});
+document.getElementById('tabAllenamento').addEventListener('click', () => switchTab('allenamento'));
+document.getElementById('tabGrafico').addEventListener('click', () => switchTab('grafico'));
+document.getElementById('tabModifica').addEventListener('click', () => switchTab('modifica'));
 
 document.getElementById('planEditor').addEventListener('click', (e) => {
   if (e.target.classList.contains('btn-delete-day')) {
@@ -486,7 +588,7 @@ document.getElementById('planEditor').addEventListener('click', (e) => {
   }
 });
 
-document.getElementById('managementView').addEventListener('click', e => {
+document.getElementById('modificaView').addEventListener('click', e => {
   if (e.target.id === 'savePlanBtn') {
     savePlanFromEditor();
   }
