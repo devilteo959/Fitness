@@ -43,7 +43,11 @@
     .input-grid input{width:100%;margin-top:.2rem}
     .title-input{flex-grow:1;background:transparent;border:none;font-size:1rem;font-weight:700;padding:0}
     .title-input:focus{outline:none;border-bottom:1px solid var(--primary);}
-    .superset-form-grid{display:grid; grid-template-columns:1fr 1fr 90px auto; gap:.5rem; align-items:center;}
+    .superset-form{border-top:1px solid var(--border);padding-top:.75rem;margin-top:.75rem}
+    .superset-form:first-of-type{border-top:none;margin-top:0;padding-top:0}
+    .form-group{margin-bottom:.5rem}
+    .form-group label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.2rem}
+    .form-group input{width:100%}
   </style>
 </head>
 <body>
@@ -247,7 +251,7 @@ function savePlanFromEditor() {
 
   dayCards.forEach(card => {
     const dayKey = card.dataset.dayKey;
-    const titleInput = card.querySelector('input.title');
+    const titleInput = card.querySelector('input.title-input');
     const title = titleInput ? titleInput.value.trim() : '';
 
     if (!title) return;
@@ -300,12 +304,23 @@ function savePlanFromEditor() {
 function createSupersetForm(coppia = ["", "", ""]) {
   const [exA, exB, sr] = coppia;
   const supersetForm = document.createElement('div');
-  supersetForm.className = 'superset-form-grid';
+  supersetForm.className = 'superset-form';
   supersetForm.innerHTML = `
-    <input type="text" class="exA" value="${exA}" placeholder="Esercizio A">
-    <input type="text" class="exB" value="${exB}" placeholder="Esercizio B">
-    <input type="text" class="sr" value="${sr}" placeholder="Serie/Reps">
-    <button class="btn ghost btn-delete-superset">➖</button>
+    <div class="form-group">
+      <label>Esercizio A</label>
+      <input type="text" class="exA" value="${exA}" placeholder="Es. Panca Piana">
+    </div>
+    <div class="form-group">
+      <label>Esercizio B</label>
+      <input type="text" class="exB" value="${exB}" placeholder="Es. Rematore (opzionale)">
+    </div>
+    <div class="form-group">
+      <label>Serie/Reps</label>
+      <input type="text" class="sr" value="${sr}" placeholder="Es. 3x10-12">
+    </div>
+    <div style="text-align:right; margin-top:.5rem;">
+      <button class="btn ghost btn-delete-superset">➖ Rimuovi</button>
+    </div>
   `;
   return supersetForm;
 }
