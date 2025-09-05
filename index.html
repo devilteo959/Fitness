@@ -4,37 +4,272 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Workout Superserie – 6 settimane</title>
-  <meta name="theme-color" content="#0f172a" />
+  <meta name="theme-color" content="#ffffff" />
   <link rel="manifest" href="manifest.json">
   <style>
-    :root{--bg:#0f172a;--card:#ffffff;--text:#0b1220;--muted:#64748b;--primary:#2563eb}
-    @media (prefers-color-scheme: dark){
-      :root{--card:#0b1220;--text:#e2e8f0;--muted:#94a3b8}
-      body{background:#0f172a}
+    :root{
+      --bg:#f8fafc; --card:#ffffff; --text:#0b1220; --muted:#64748b; --border:#e2e8f0; --primary:#2563eb;
     }
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;color:var(--text);background:#f8fafc}
-    header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.9);backdrop-filter:blur(6px);border-bottom:1px solid #e2e8f0}
-    .wrap{max-width:780px;margin:0 auto;padding:.75rem 1rem}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;
+         color:var(--text); background:var(--bg);}
+    header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--border)}
+    .wrap{max-width:780px;margin:0 auto;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem}
     h1{font-size:1.125rem;margin:0;font-weight:700}
-    select,button,input[type="number"],input[type="text"]{border:1px solid #cbd5e1;border-radius:.6rem;padding:.4rem .6rem;font-size:.95rem;background:#fff}
-    .btn{border-radius:.75rem;padding:.5rem .75rem;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+    select,button,input[type="number"],input[type="text"]{
+      border:1px solid #cbd5e1;border-radius:.6rem;padding:.45rem .6rem;font-size:.95rem;background:#fff
+    }
+    .btn{border-radius:.75rem;padding:.55rem .8rem;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.06)}
     .ghost{background:#f1f5f9}
     .primary{background:var(--primary);color:#fff;border-color:transparent}
-    main{max-width:780px;margin:0 auto;padding:1rem 1rem 5.5rem}
-    .card{background:var(--card);border-radius:1rem;box-shadow:0 2px 10px rgba(0,0,0,.06);padding:1rem;margin:.75rem 0}
-    .muted{color:var(--muted);font-size:.9rem}
-    .chip{display:inline-flex;align-items:center;gap:.5rem;border-radius:999px;padding:.25rem .75rem;background:#f1f5f9}
+    main{max-width:780px;margin:0 auto;padding:1rem 1rem 5rem}
+    .card{background:var(--card);border-radius:1rem;box-shadow:0 2px 10px rgba(0,0,0,.05);padding:1rem;margin:.75rem 0;border:1px solid var(--border)}
+    .muted{color:var(--muted);font-size:.92rem}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
     .grid{display:grid;gap:.75rem}
     .two{grid-template-columns:1fr 1fr}
-    nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid #e2e8f0}
-    .navgrid{max-width:780px;margin:0 auto;padding:.5rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+    .three{grid-template-columns:repeat(3,1fr)}
     .title{font-size:1rem;font-weight:700;margin:0}
     .subtitle{font-size:.95rem;margin:.25rem 0 0}
-    .volwrap{text-align:right}
-    .vol{font-weight:800;font-size:1.1rem}
+    .chip{display:inline-flex;align-items:center;gap:.5rem;border-radius:999px;padding:.25rem .75rem;background:#f1f5f9}
+    .volbox{text-align:right}
+    .vol{font-weight:800}
+    nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border)}
+    .navgrid{max-width:780px;margin:0 auto;padding:.6rem;display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+    .sep{height:1px;background:var(--border);margin:.5rem 0}
   </style>
 </head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Workout Superserie – 6 settimane</h1>
+      <select id="weekSelect"></select>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="row">
+        <div>
+          <div class="title">Settimana & indicazioni</div>
+          <p id="weekNote" class="muted"></p>
+        </div>
+        <div class="row" style="gap:.5rem">
+          <button id="exportCsv" class="btn ghost">⬇️ CSV</button>
+          <button id="resetWeek" class="btn ghost">♻️ Reset</button>
+          <button id="saveNow" class="btn primary">💾 Salva</button>
+        </div>
+      </div>
+      <p class="muted" style="margin:.5rem 0 0">Dati salvati in locale (localStorage). Installabile come app: Menu ⋮ → Aggiungi a schermata Home.</p>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <div class="title">Giorno</div>
+        <div class="row" style="gap:.5rem">
+          <button class="chip" data-day="G1">Giorno 1</button>
+          <button class="chip" data-day="G2">Giorno 2</button>
+          <button class="chip" data-day="G3">Giorno 3</button>
+        </div>
+      </div>
+      <p class="muted">Inserisci peso e ripetizioni per **ciascun esercizio** della superserie. Il volume è calcolato per A, per B e totale.</p>
+    </section>
+
+    <section id="workouts" class="grid"></section>
+  </main>
+
+  <nav>
+    <div class="navgrid">
+      <button class="btn ghost" id="resetWeek2">♻️ Reset</button>
+      <button class="btn primary" id="exportCsv2">⬇️ CSV</button>
+    </div>
+  </nav>
+
+<script>
+/* ---------- Piano allenamento ---------- */
+const PLAN = {
+  G1:{ titolo:"Giorno 1 – Petto + Schiena", coppie:[
+    ["Panca piana bilanciere","Rematore bilanciere","4x8–10"],
+    ["Panca inclinata manubri","Pulley basso","3x10–12"],
+    ["Croci ai cavi","Lat machine presa larga","3x12"],
+    ["Plank","-","3x max"],
+  ]},
+  G2:{ titolo:"Giorno 2 – Spalle + Braccia", coppie:[
+    ["Military press","Trazioni supine","4x8–10"],
+    ["Alzate laterali","Face pull","3x12"],
+    ["Curl bilanciere EZ","French press sdraiato","3x10–12"],
+    ["Curl manubri alternati","Push down cavi","3x12–15"],
+  ]},
+  G3:{ titolo:"Giorno 3 – Gambe", coppie:[
+    ["Squat","Stacco rumeno","4x8"],
+    ["Affondi camminati","Hip thrust","3x10"],
+    ["Leg extension","Leg curl","3x12–15"],
+    ["Calf raise in piedi","Calf seduto","4x15–20"],
+    ["Hanging leg raise","-","3x max"],
+  ]},
+};
+
+const WEEK_NOTES = {
+  1:"65% 1RM – lascia 2 reps in riserva",
+  2:"70% 1RM – lascia 1–2 reps in riserva",
+  3:"75% 1RM – lascia 1 rep in riserva",
+  4:"77.5% 1RM – lascia 0–1 reps in riserva",
+  5:"80% 1RM – vicino al cedimento",
+  6:"85% 1RM – test/overreach leggero o scarico autoregolato",
+};
+
+/* ---------- Stato + persistenza ---------- */
+const state = {
+  day: localStorage.getItem("ws_day") || "G1",
+  week: +(localStorage.getItem("ws_week") || 1),
+  data: JSON.parse(localStorage.getItem("ws_data") || "{}"),
+};
+function save(){ localStorage.setItem("ws_day", state.day); localStorage.setItem("ws_week", state.week); localStorage.setItem("ws_data", JSON.stringify(state.data)); }
+function ensureWeek(){ if (!state.data[state.week]) state.data[state.week] = { G1:{}, G2:{}, G3:{} }; }
+function keyAB(a,b){ return `${a}__${b}`; }
+function val(k,f){ ensureWeek(); return state.data[state.week][state.day][k]?.[f] || ""; }
+function setVal(k,f,v){ ensureWeek(); if(!state.data[state.week][state.day][k]) state.data[state.week][state.day][k]={}; state.data[state.week][state.day][k][f]=v; save(); computeVolumes(); }
+
+/* ---------- Rendering ---------- */
+const weekSelect = document.getElementById('weekSelect');
+const weekNote = document.getElementById('weekNote');
+const workouts = document.getElementById('workouts');
+
+function renderWeekSelect(){
+  weekSelect.innerHTML = "";
+  for(let i=1;i<=6;i++){
+    const o=document.createElement('option');
+    o.value=i; o.textContent=`Settimana ${i}`; if(i===state.week) o.selected=true;
+    weekSelect.appendChild(o);
+  }
+  weekNote.textContent = WEEK_NOTES[state.week];
+}
+
+function computeVolumes(){
+  document.querySelectorAll('[data-ex]').forEach(sec=>{
+    const repsA = parseInt(sec.querySelector('[data-field="repsA"]').value)||0;
+    const repsB = parseInt(sec.querySelector('[data-field="repsB"]').value)||0;
+    const pesoA = parseFloat(sec.querySelector('[data-field="pesoA"]').value)||0;
+    const pesoB = parseFloat(sec.querySelector('[data-field="pesoB"]').value)||0;
+    const sr = sec.querySelector('[data-serie]').textContent.trim();
+    const m = sr.match(/(\d+)x/); const n = m?parseInt(m[1]):1;
+    const volA = Math.round(pesoA*repsA*n);
+    const volB = Math.round(pesoB*repsB*n);
+    sec.querySelector('[data-volA]').textContent = volA?volA:"-";
+    sec.querySelector('[data-volB]').textContent = volB?volB:"-";
+    sec.querySelector('[data-volT]').textContent = (volA||0)+(volB||0) || "-";
+  });
+}
+
+function renderDay(){
+  workouts.innerHTML = "";
+  const day = PLAN[state.day];
+
+  const title = document.createElement('h2');
+  title.className='title'; title.textContent = day.titolo;
+  workouts.appendChild(title);
+
+  day.coppie.forEach(([A,B,SR],i)=>{
+    const k = keyAB(A,B);
+    const card = document.createElement('div'); card.className='card'; card.dataset.ex=k;
+    card.innerHTML = `
+      <div class="row">
+        <div>
+          <div class="subtitle"><strong>Superserie ${i+1}</strong></div>
+          <div>${A} <span class="muted">+ ${B}</span></div>
+          <div class="muted" data-serie>${SR}</div>
+        </div>
+        <div class="volbox">
+          <div class="muted">Vol. A / B / Tot</div>
+          <div class="vol"><span data-volA>-</span> / <span data-volB>-</span> / <span data-volT>-</span></div>
+        </div>
+      </div>
+
+      <div class="sep"></div>
+
+      <div class="grid two">
+        <div>
+          <div class="subtitle"><strong>${A}</strong></div>
+          <div class="grid two">
+            <label>Peso A (kg)<br><input type="number" step="0.5" inputmode="decimal" data-field="pesoA" value="${val(k,'pesoA')}"></label>
+            <label>Reps A<br><input type="number" step="1" inputmode="numeric" data-field="repsA" value="${val(k,'repsA')}"></label>
+          </div>
+        </div>
+        <div>
+          <div class="subtitle"><strong>${B}</strong></div>
+          <div class="grid two">
+            <label>Peso B (kg)<br><input type="number" step="0.5" inputmode="decimal" data-field="pesoB" value="${val(k,'pesoB')}"></label>
+            <label>Reps B<br><input type="number" step="1" inputmode="numeric" data-field="repsB" value="${val(k,'repsB')}"></label>
+          </div>
+        </div>
+      </div>
+
+      <label style="display:block;margin-top:.6rem">Note<br>
+        <input type="text" data-field="note" value="${val(k,'note')}" style="width:100%">
+      </label>
+    `;
+    workouts.appendChild(card);
+  });
+
+  workouts.querySelectorAll('[data-field]').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const f = e.target.getAttribute('data-field');
+      const k = e.target.closest('[data-ex]').dataset.ex;
+      setVal(k, f, e.target.value);
+    });
+  });
+  computeVolumes();
+}
+
+/* ---------- CSV & reset ---------- */
+function exportCSV(){
+  ensureWeek();
+  const rows = [["Settimana","Giorno","Superserie","Esercizio A","Esercizio B","Serie/Reps",
+                 "Peso A (kg)","Reps A","Volume A","Peso B (kg)","Reps B","Volume B","Volume Totale","Note"]];
+  const day = PLAN[state.day];
+  day.coppie.forEach(([A,B,SR],i)=>{
+    const k = keyAB(A,B);
+    const v = state.data[state.week][state.day][k] || {};
+    const m = SR.match(/(\d+)x/); const n = m?parseInt(m[1]):1;
+    const repsA = parseInt(v.repsA||0)||0, repsB = parseInt(v.repsB||0)||0;
+    const pesoA = parseFloat(v.pesoA||0)||0, pesoB = parseFloat(v.pesoB||0)||0;
+    const volA = Math.round(pesoA*repsA*n)||"";
+    const volB = Math.round(pesoB*repsB*n)||"";
+    const volT = (parseInt(volA)||0)+(parseInt(volB)||0) || "";
+    rows.push([state.week, day.titolo, i+1, A, B, SR,
+               v.pesoA||"", v.repsA||"", volA, v.pesoB||"", v.repsB||"", volB, volT, v.note||""]);
+  });
+  const csv = rows.map(r=>r.map(x=>`"${String(x).replaceAll('"','""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`workout_settimana_${state.week}_${state.day}.csv`; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function resetWeek(){
+  if(!confirm('Azzerare i dati di questa settimana?')) return;
+  ensureWeek(); state.data[state.week] = { G1:{}, G2:{}, G3:{} }; save(); renderDay();
+}
+
+/* ---------- Bindings ---------- */
+document.getElementById('exportCsv').addEventListener('click', exportCSV);
+document.getElementById('exportCsv2').addEventListener('click', exportCSV);
+document.getElementById('resetWeek').addEventListener('click', resetWeek);
+document.getElementById('resetWeek2').addEventListener('click', resetWeek);
+document.getElementById('saveNow').addEventListener('click', ()=>{ save(); alert('Dati salvati.'); });
+document.getElementById('weekSelect').addEventListener('change', e=>{ state.week=+e.target.value; save(); renderWeekSelect(); renderDay(); });
+Array.from(document.querySelectorAll('[data-day]')).forEach(b=> b.addEventListener('click', ()=>{ state.day=b.dataset.day; save(); renderDay(); }));
+
+/* ---------- Init ---------- */
+renderWeekSelect(); renderDay(); computeVolumes();
+
+/* ---------- PWA ---------- */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=> navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html></head>
 <body>
   <header>
     <div class="wrap row">
