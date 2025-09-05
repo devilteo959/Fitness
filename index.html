@@ -75,7 +75,6 @@
           </div>
           <div class="row" style="gap:.5rem">
             <button id="resetWeek" class="btn ghost">♻️ Reset</button>
-            <button id="saveNow" class="btn primary">💾 Salva</button>
           </div>
         </div>
       </section>
@@ -568,7 +567,6 @@ function switchTab(activeTab) {
 
 /* ---------- Bindings ---------- */
 document.getElementById('resetWeek').addEventListener('click', resetWeek);
-document.getElementById('saveNow').addEventListener('click', ()=>{ save(); alert('Dati salvati.'); });
 document.getElementById('weekSelect').addEventListener('change', e=>{ state.week=+e.target.value; save(); renderWeekSelect(); renderDay(); });
 
 document.getElementById('tabAllenamento').addEventListener('click', () => switchTab('allenamento'));
