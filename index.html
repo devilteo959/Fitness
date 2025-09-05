@@ -42,40 +42,57 @@
 <body>
   <header>
     <div class="wrap">
-      <h1>Workout Superserie – 6 settimane</h1>
-      <select id="weekSelect"></select>
+      <h1>Workout Superserie</h1>
+      <div class="row" style="gap:.5rem">
+        <select id="weekSelect"></select>
+        <button id="managePlanBtn" class="btn ghost">⚙️ Gestisci</button>
+      </div>
     </div>
   </header>
 
   <main>
-    <section class="card">
-      <div class="row">
-        <div>
-          <div class="title">Settimana & indicazioni</div>
-          <p id="weekNote" class="muted"></p>
+    <div id="workoutView">
+      <section class="card">
+        <div class="row">
+          <div>
+            <div class="title">Settimana & indicazioni</div>
+            <p id="weekNote" class="muted"></p>
+          </div>
+          <div class="row" style="gap:.5rem">
+            <button id="exportCsv" class="btn ghost">⬇️ CSV</button>
+            <button id="resetWeek" class="btn ghost">♻️ Reset</button>
+            <button id="saveNow" class="btn primary">💾 Salva</button>
+          </div>
         </div>
-        <div class="row" style="gap:.5rem">
-          <button id="exportCsv" class="btn ghost">⬇️ CSV</button>
-          <button id="resetWeek" class="btn ghost">♻️ Reset</button>
-          <button id="saveNow" class="btn primary">💾 Salva</button>
-        </div>
-      </div>
-      <p class="muted" style="margin:.5rem 0 0">Dati salvati in locale (localStorage). Installabile come app: Menu ⋮ → Aggiungi a schermata Home.</p>
-    </section>
+        <p class="muted" style="margin:.5rem 0 0">Dati salvati in locale (localStorage). Installabile come app: Menu ⋮ → Aggiungi a schermata Home.</p>
+      </section>
 
-    <section class="card">
-      <div class="row">
-        <div class="title">Giorno</div>
-        <div class="row" style="gap:.5rem">
-          <button class="chip" data-day="G1">Giorno 1</button>
-          <button class="chip" data-day="G2">Giorno 2</button>
-          <button class="chip" data-day="G3">Giorno 3</button>
+      <section class="card">
+        <div class="row">
+          <div class="title">Giorno</div>
+        <div class="row" style="gap:.5rem" id="dayButtons">
+          <!-- Day buttons will be rendered here dynamically -->
+          </div>
         </div>
-      </div>
-      <p class="muted">Inserisci peso e ripetizioni per **ciascun esercizio** della superserie. Il volume è calcolato per A, per B e totale.</p>
-    </section>
+        <p class="muted">Inserisci peso e ripetizioni per **ciascun esercizio** della superserie. Il volume è calcolato per A, per B e totale.</p>
+      </section>
 
-    <section id="workouts" class="grid"></section>
+      <section id="workouts" class="grid"></section>
+    </div>
+
+    <section id="managementView" style="display:none;">
+      <div class="card">
+        <div class="row">
+          <h2 class="title">Gestione Piano Allenamento</h2>
+        <div class="row" style="gap:.5rem">
+          <button id="closeManagementBtn" class="btn ghost">Annulla</button>
+          <button id="savePlanBtn" class="btn primary">💾 Salva</button>
+        </div>
+        </div>
+        <p class="muted" style="margin-top:.5rem;">Qui potrai modificare i tuoi giorni di allenamento, le superserie e gli esercizi.</p>
+        <div id="planEditor" style="margin-top:1rem;"></div>
+      </div>
+    </section>
   </main>
 
   <nav>
@@ -87,27 +104,33 @@
 
 <script>
 /* ---------- Piano allenamento ---------- */
-const PLAN = {
-  G1:{ titolo:"Giorno 1 – Petto + Schiena", coppie:[
-    ["Panca piana bilanciere","Rematore bilanciere","4x8–10"],
-    ["Panca inclinata manubri","Pulley basso","3x10–12"],
-    ["Croci ai cavi","Lat machine presa larga","3x12"],
-    ["Plank","-","3x max"],
-  ]},
-  G2:{ titolo:"Giorno 2 – Spalle + Braccia", coppie:[
-    ["Military press","Trazioni supine","4x8–10"],
-    ["Alzate laterali","Face pull","3x12"],
-    ["Curl bilanciere EZ","French press sdraiato","3x10–12"],
-    ["Curl manubri alternati","Push down cavi","3x12–15"],
-  ]},
-  G3:{ titolo:"Giorno 3 – Gambe", coppie:[
-    ["Squat","Stacco rumeno","4x8"],
-    ["Affondi camminati","Hip thrust","3x10"],
-    ["Leg extension","Leg curl","3x12–15"],
-    ["Calf raise in piedi","Calf seduto","4x15–20"],
-    ["Hanging leg raise","-","3x max"],
-  ]},
-};
+// Il piano è salvato in localStorage per renderlo modificabile.
+// Se non esiste, viene creato un piano di default.
+let plan = JSON.parse(localStorage.getItem("ws_plan"));
+if (!plan) {
+  plan = {
+    G1:{ titolo:"Giorno 1 – Petto + Schiena", coppie:[
+      ["Panca piana bilanciere","Rematore bilanciere","4x8–10"],
+      ["Panca inclinata manubri","Pulley basso","3x10–12"],
+      ["Croci ai cavi","Lat machine presa larga","3x12"],
+      ["Plank","-","3x max"],
+    ]},
+    G2:{ titolo:"Giorno 2 – Spalle + Braccia", coppie:[
+      ["Military press","Trazioni supine","4x8–10"],
+      ["Alzate laterali","Face pull","3x12"],
+      ["Curl bilanciere EZ","French press sdraiato","3x10–12"],
+      ["Curl manubri alternati","Push down cavi","3x12–15"],
+    ]},
+    G3:{ titolo:"Giorno 3 – Gambe", coppie:[
+      ["Squat","Stacco rumeno","4x8"],
+      ["Affondi camminati","Hip thrust","3x10"],
+      ["Leg extension","Leg curl","3x12–15"],
+      ["Calf raise in piedi","Calf seduto","4x15–20"],
+      ["Hanging leg raise","-","3x max"],
+    ]},
+  };
+  localStorage.setItem("ws_plan", JSON.stringify(plan));
+}
 
 const WEEK_NOTES = {
   1:"65% 1RM – lascia 2 reps in riserva",
@@ -134,6 +157,8 @@ function setVal(k,f,v){ ensureWeek(); if(!state.data[state.week][state.day][k]) 
 const weekSelect = document.getElementById('weekSelect');
 const weekNote = document.getElementById('weekNote');
 const workouts = document.getElementById('workouts');
+const workoutView = document.getElementById('workoutView');
+const managementView = document.getElementById('managementView');
 
 function renderWeekSelect(){
   weekSelect.innerHTML = "";
@@ -161,9 +186,158 @@ function computeVolumes(){
   });
 }
 
+function renderPlanEditor() {
+  const editor = document.getElementById('planEditor');
+  editor.innerHTML = ''; // Clear previous content
+
+  // Create a sorted list of day keys to ensure order
+  const dayKeys = Object.keys(plan).sort((a, b) => {
+    const numA = parseInt(a.substring(1));
+    const numB = parseInt(b.substring(1));
+    return numA - numB;
+  });
+
+  for (const dayKey of dayKeys) {
+    const day = plan[dayKey];
+    const dayCard = document.createElement('div');
+    dayCard.className = 'card';
+    dayCard.dataset.dayKey = dayKey;
+    dayCard.innerHTML = `
+      <div class="row">
+        <input type="text" class="title" style="flex-grow:1; background:transparent; border:none; font-size:1rem; font-weight:700;" value="${day.titolo}" placeholder="Titolo Giorno">
+        <button class="btn ghost btn-delete-day">❌</button>
+      </div>
+      <div class="sep"></div>
+      <div class="supersets-container grid"></div>
+      <button class="btn ghost btn-add-superset" style="margin-top: .75rem;">➕ Aggiungi Superserie</button>
+    `;
+
+    const supersetsContainer = dayCard.querySelector('.supersets-container');
+
+    day.coppie.forEach((coppia) => {
+      const supersetForm = createSupersetForm(coppia);
+      supersetsContainer.appendChild(supersetForm);
+    });
+
+    editor.appendChild(dayCard);
+  }
+
+  const addDayBtn = document.createElement('button');
+  addDayBtn.className = 'btn primary btn-add-day';
+  addDayBtn.textContent = '➕ Aggiungi Giorno';
+  addDayBtn.style.marginTop = '1rem';
+  editor.appendChild(addDayBtn);
+}
+
+function savePlanFromEditor() {
+  const newPlan = {};
+  const editor = document.getElementById('planEditor');
+  const dayCards = editor.querySelectorAll('.card[data-day-key]');
+
+  dayCards.forEach(card => {
+    const dayKey = card.dataset.dayKey;
+    const titleInput = card.querySelector('input.title');
+    const title = titleInput ? titleInput.value.trim() : '';
+
+    if (!title) return;
+
+    const supersetForms = card.querySelectorAll('.superset-form');
+    const coppie = [];
+    supersetForms.forEach(form => {
+      const exAInput = form.querySelector('input.exA');
+      const exBInput = form.querySelector('input.exB');
+      const srInput = form.querySelector('input.sr');
+
+      const exA = exAInput ? exAInput.value.trim() : '';
+      const exB = exBInput ? exBInput.value.trim() : '';
+      const sr = srInput ? srInput.value.trim() : '';
+
+      if (exA || exB) {
+        coppie.push([exA, exB, sr]);
+      }
+    });
+
+    if (title) {
+        newPlan[dayKey] = {
+        titolo: title,
+        coppie: coppie
+        };
+    }
+  });
+
+  plan = newPlan;
+  localStorage.setItem('ws_plan', JSON.stringify(plan));
+
+  managementView.style.display = 'none';
+  workoutView.style.display = 'block';
+
+  if (!plan[state.day]) {
+    const firstDay = Object.keys(plan)[0] || null;
+    state.day = firstDay;
+    save();
+  }
+
+  renderWeekSelect();
+  renderDayButtons();
+  renderDay();
+
+  alert('Piano salvato!');
+}
+
+function createSupersetForm(coppia = ["", "", ""]) {
+  const [exA, exB, sr] = coppia;
+  const supersetForm = document.createElement('div');
+  supersetForm.className = 'row superset-form';
+  supersetForm.style.gap = '.5rem';
+  supersetForm.innerHTML = `
+    <input type="text" class="exA" value="${exA}" placeholder="Esercizio A" style="flex-grow:1;">
+    <input type="text" class="exB" value="${exB}" placeholder="Esercizio B" style="flex-grow:1;">
+    <input type="text" class="sr" value="${sr}" placeholder="Serie/Reps" style="width:80px;">
+    <button class="btn ghost btn-delete-superset">➖</button>
+  `;
+  return supersetForm;
+}
+
+function renderDayButtons() {
+  const container = document.getElementById('dayButtons');
+  container.innerHTML = ''; // Clear old buttons
+
+  if (!plan || Object.keys(plan).length === 0) return;
+
+  const dayKeys = Object.keys(plan).sort((a, b) => {
+    const numA = parseInt(a.substring(1)) || 0;
+    const numB = parseInt(b.substring(1)) || 0;
+    return numA - numB;
+  });
+
+  dayKeys.forEach(dayKey => {
+      const day = plan[dayKey];
+      const button = document.createElement('button');
+      button.className = 'chip';
+      if (dayKey === state.day) {
+          button.classList.add('primary');
+      }
+      button.dataset.day = dayKey;
+      button.textContent = day.titolo.split('–')[0].trim() || dayKey;
+
+      button.addEventListener('click', ()=>{
+          state.day=dayKey;
+          save();
+          renderDay();
+          renderDayButtons();
+      });
+
+      container.appendChild(button);
+  });
+}
+
 function renderDay(){
   workouts.innerHTML = "";
-  const day = PLAN[state.day];
+  if (!state.day || !plan[state.day]) {
+    workouts.innerHTML = `<p class="muted">Nessun giorno selezionato o il giorno non esiste più. Selezionane uno o creane uno nuovo in "Gestisci".</p>`;
+    return;
+  }
+  const day = plan[state.day];
 
   const title = document.createElement('h2');
   title.className='title'; title.textContent = day.titolo;
@@ -226,7 +400,7 @@ function exportCSV(){
   ensureWeek();
   const rows = [["Settimana","Giorno","Superserie","Esercizio A","Esercizio B","Serie/Reps",
                  "Peso A (kg)","Reps A","Volume A","Peso B (kg)","Reps B","Volume B","Volume Totale","Note"]];
-  const day = PLAN[state.day];
+  const day = plan[state.day];
   day.coppie.forEach(([A,B,SR],i)=>{
     const k = keyAB(A,B);
     const v = state.data[state.week][state.day][k] || {};
@@ -258,10 +432,68 @@ document.getElementById('resetWeek').addEventListener('click', resetWeek);
 document.getElementById('resetWeek2').addEventListener('click', resetWeek);
 document.getElementById('saveNow').addEventListener('click', ()=>{ save(); alert('Dati salvati.'); });
 document.getElementById('weekSelect').addEventListener('change', e=>{ state.week=+e.target.value; save(); renderWeekSelect(); renderDay(); });
-Array.from(document.querySelectorAll('[data-day]')).forEach(b=> b.addEventListener('click', ()=>{ state.day=b.dataset.day; save(); renderDay(); }));
+
+document.getElementById('managePlanBtn').addEventListener('click', () => {
+  workoutView.style.display = 'none';
+  managementView.style.display = 'block';
+  renderPlanEditor();
+});
+
+document.getElementById('closeManagementBtn').addEventListener('click', () => {
+  managementView.style.display = 'none';
+  workoutView.style.display = 'block';
+  // Nessun re-render al "chiudi", solo al "salva".
+});
+
+document.getElementById('planEditor').addEventListener('click', (e) => {
+  if (e.target.classList.contains('btn-delete-day')) {
+    if (confirm('Sei sicuro di voler eliminare questo giorno?')) {
+      e.target.closest('.card[data-day-key]').remove();
+    }
+  }
+
+  if (e.target.classList.contains('btn-delete-superset')) {
+    e.target.closest('.superset-form').remove();
+  }
+
+  if (e.target.classList.contains('btn-add-superset')) {
+    const container = e.target.previousElementSibling;
+    if (container && container.classList.contains('supersets-container')) {
+      container.appendChild(createSupersetForm());
+    }
+  }
+
+  if (e.target.classList.contains('btn-add-day')) {
+    const dayCards = document.querySelectorAll('#planEditor .card[data-day-key]');
+    const dayKeys = Array.from(dayCards).map(c => c.dataset.dayKey);
+    const existingDayNums = dayKeys.map(k => parseInt(k.replace('G', ''))).filter(n => !isNaN(n));
+    const nextDayNum = existingDayNums.length > 0 ? Math.max(...existingDayNums) + 1 : 1;
+    const newDayKey = `G${nextDayNum}`;
+
+    const newDayCard = document.createElement('div');
+    newDayCard.className = 'card';
+    newDayCard.dataset.dayKey = newDayKey;
+    newDayCard.innerHTML = `
+      <div class="row">
+        <input type="text" class="title" style="flex-grow:1; background:transparent; border:none; font-size:1rem; font-weight:700;" value="Nuovo Giorno ${nextDayNum}" placeholder="Titolo Giorno">
+        <button class="btn ghost btn-delete-day">❌</button>
+      </div>
+      <div class="sep"></div>
+      <div class="supersets-container grid"></div>
+      <button class="btn ghost btn-add-superset" style="margin-top: .75rem;">➕ Aggiungi Superserie</button>
+    `;
+    e.target.before(newDayCard);
+  }
+});
+
+document.getElementById('managementView').addEventListener('click', e => {
+  if (e.target.id === 'savePlanBtn') {
+    savePlanFromEditor();
+  }
+});
 
 /* ---------- Init ---------- */
-renderWeekSelect(); renderDay(); computeVolumes();
+renderWeekSelect(); renderDayButtons(); renderDay(); computeVolumes();
 
 /* ---------- PWA ---------- */
 if ('serviceWorker' in navigator) {
