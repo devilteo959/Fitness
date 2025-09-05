@@ -38,6 +38,12 @@
     .tab-nav{display:flex;border-bottom:1px solid var(--border);padding:0 1rem;gap:1rem;margin-top:.5rem}
     .tab-btn{border:none;background:transparent;padding:.75rem 0;font-size:1rem;color:var(--muted);border-bottom:2px solid transparent}
     .tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+    .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+    .input-grid label{font-size:.85rem;color:var(--muted)}
+    .input-grid input{width:100%;margin-top:.2rem}
+    .title-input{flex-grow:1;background:transparent;border:none;font-size:1rem;font-weight:700;padding:0}
+    .title-input:focus{outline:none;border-bottom:1px solid var(--primary);}
+    .superset-form-grid{display:grid; grid-template-columns:1fr 1fr 90px auto; gap:.5rem; align-items:center;}
   </style>
 </head>
 <body>
@@ -68,7 +74,6 @@
             <button id="saveNow" class="btn primary">💾 Salva</button>
           </div>
         </div>
-        <p class="muted" style="margin:.5rem 0 0">Dati salvati in locale (localStorage). Installabile come app: Menu ⋮ → Aggiungi a schermata Home.</p>
       </section>
 
       <section class="card">
@@ -78,7 +83,6 @@
           <!-- Day buttons will be rendered here dynamically -->
           </div>
         </div>
-        <p class="muted">Inserisci peso e ripetizioni per **ciascun esercizio** della superserie. Il volume è calcolato per A, per B e totale.</p>
       </section>
 
       <section id="workouts" class="grid"></section>
@@ -211,7 +215,7 @@ function renderPlanEditor() {
     dayCard.dataset.dayKey = dayKey;
     dayCard.innerHTML = `
       <div class="row">
-        <input type="text" class="title" style="flex-grow:1; background:transparent; border:none; font-size:1rem; font-weight:700;" value="${day.titolo}" placeholder="Titolo Giorno">
+        <input type="text" class="title-input" value="${day.titolo}" placeholder="Titolo Giorno">
         <button class="btn ghost btn-delete-day">❌</button>
       </div>
       <div class="sep"></div>
@@ -296,12 +300,11 @@ function savePlanFromEditor() {
 function createSupersetForm(coppia = ["", "", ""]) {
   const [exA, exB, sr] = coppia;
   const supersetForm = document.createElement('div');
-  supersetForm.className = 'row superset-form';
-  supersetForm.style.gap = '.5rem';
+  supersetForm.className = 'superset-form-grid';
   supersetForm.innerHTML = `
-    <input type="text" class="exA" value="${exA}" placeholder="Esercizio A" style="flex-grow:1;">
-    <input type="text" class="exB" value="${exB}" placeholder="Esercizio B" style="flex-grow:1;">
-    <input type="text" class="sr" value="${sr}" placeholder="Serie/Reps" style="width:80px;">
+    <input type="text" class="exA" value="${exA}" placeholder="Esercizio A">
+    <input type="text" class="exB" value="${exB}" placeholder="Esercizio B">
+    <input type="text" class="sr" value="${sr}" placeholder="Serie/Reps">
     <button class="btn ghost btn-delete-superset">➖</button>
   `;
   return supersetForm;
@@ -370,22 +373,32 @@ function renderDay(){
 
       <div class="sep"></div>
 
+      ${(B && B !== "-") ? `
       <div class="grid two">
         <div>
           <div class="subtitle"><strong>${A}</strong></div>
-          <div class="grid two">
-            <label>Peso A (kg)<br><input type="number" step="0.5" inputmode="decimal" data-field="pesoA" value="${val(k,'pesoA')}"></label>
-            <label>Reps A<br><input type="number" step="1" inputmode="numeric" data-field="repsA" value="${val(k,'repsA')}"></label>
+          <div class="input-grid">
+            <label>Peso (kg)<input type="number" step="0.5" inputmode="decimal" data-field="pesoA" value="${val(k,'pesoA')}"></label>
+            <label>Reps<input type="number" step="1" inputmode="numeric" data-field="repsA" value="${val(k,'repsA')}"></label>
           </div>
         </div>
         <div>
           <div class="subtitle"><strong>${B}</strong></div>
-          <div class="grid two">
-            <label>Peso B (kg)<br><input type="number" step="0.5" inputmode="decimal" data-field="pesoB" value="${val(k,'pesoB')}"></label>
-            <label>Reps B<br><input type="number" step="1" inputmode="numeric" data-field="repsB" value="${val(k,'repsB')}"></label>
+          <div class="input-grid">
+            <label>Peso (kg)<input type="number" step="0.5" inputmode="decimal" data-field="pesoB" value="${val(k,'pesoB')}"></label>
+            <label>Reps<input type="number" step="1" inputmode="numeric" data-field="repsB" value="${val(k,'repsB')}"></label>
           </div>
         </div>
       </div>
+      ` : `
+      <div>
+        <div class="subtitle"><strong>${A}</strong></div>
+        <div class="input-grid">
+          <label>Peso (kg)<input type="number" step="0.5" inputmode="decimal" data-field="pesoA" value="${val(k,'pesoA')}"></label>
+          <label>Reps<input type="number" step="1" inputmode="numeric" data-field="repsA" value="${val(k,'repsA')}"></label>
+        </div>
+      </div>
+      `}
 
       <label style="display:block;margin-top:.6rem">Note<br>
         <input type="text" data-field="note" value="${val(k,'note')}" style="width:100%">
@@ -468,8 +481,8 @@ function renderCharts() {
 
 function createChart(title, data) {
     const container = document.createElement('div');
-    container.className = 'chart-wrapper';
-    container.innerHTML = `<h3 class="subtitle" style="margin-bottom:.5rem;">${title}</h3>`;
+    container.className = 'card'; // Usa lo stile card per coerenza
+    container.innerHTML = `<div class="subtitle" style="margin-bottom:.5rem;"><strong>${title}</strong></div>`;
 
     const maxVal = Math.max(...data, 1); // Evita divisione per zero
     const svgHeight = 150;
